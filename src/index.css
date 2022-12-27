@@ -111,7 +111,10 @@ main > p {
   background-color: #141414;
 }
 
-.roll-dice {
+.btn-dice:first-child {
+  margin-right: 20px;
+}
+.btn-dice {
   height: 50px;
   width: 150px;
   border: none;
@@ -123,10 +126,10 @@ main > p {
   cursor: pointer;
 }
 
-.roll-dice:focus {
+.btn-dice:focus {
   outline: none;
 }
 
-.roll-dice:active {
+.btn-dice:active {
   box-shadow: inset 5px 5px 10px -3px rgba(0, 0, 0, 0.7);
 }
