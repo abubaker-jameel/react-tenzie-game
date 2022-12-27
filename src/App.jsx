@@ -4,8 +4,91 @@ import Confetti from "react-confetti";
 import Die from "./Die";
 
 export default function App() {
+  function timeFormat() {
+    return { seconds: 0, minutes: 0, hours: 0 };
+  }
+
+  const getScore = JSON.parse(localStorage.getItem("score"));
+
+  function decide() {
+    if (getScore === null) {
+      const arr = [{ seconds: 60, minutes: 60, hours: 24 }];
+      return arr;
+    } else {
+      return getScore;
+    }
+  }
+  function maxScore() {
+    if (getScore) {
+      const maxScore = {
+        seconds: Math.min(...getScore.map((sec) => sec.seconds)),
+        minutes: Math.min(...getScore.map((min) => min.minutes)),
+        hours: Math.min(...getScore.map((hrs) => hrs.hours)),
+      };
+      return maxScore;
+    } else {
+      return { seconds: 0, minutes: 0, hours: 0 };
+    }
+  }
   const [dice, setDice] = useState(allNewFaces());
   const [tenzies, setTenzies] = useState(false);
+  const [notSameValues, setNotSameValues] = useState(false);
+  const [time, setTime] = useState(timeFormat());
+  const [score, setScore] = useState(decide());
+  const [highScore, setHighScore] = useState(maxScore());
+
+  useEffect(() => {
+    if (tenzies) {
+      setScore((prevScore) => [...prevScore, time]);
+      localStorage.setItem("score", JSON.stringify(score));
+    }
+  }, [tenzies]);
+
+  useEffect(() => {
+    if (getScore) {
+      setHighScore({
+        seconds: Math.min(...getScore.map((sec) => sec.seconds)),
+        minutes: Math.min(...getScore.map((min) => min.minutes)),
+        hours: Math.min(...getScore.map((hrs) => hrs.hours)),
+      });
+    }
+  }, [score]);
+
+  function resetHighScore() {
+    localStorage.clear();
+    setHighScore({ seconds: 0, minutes: 0, hours: 0 });
+  }
+  function timer() {
+    setTime((prevTime) => ({
+      ...prevTime,
+      seconds: prevTime.seconds + 1,
+    }));
+
+    if (time.seconds === 59) {
+      setTime((prevTime) => ({
+        ...prevTime,
+        seconds: 0,
+        minutes: prevTime.minutes + 1,
+      }));
+    } else if (time.minutes === 59) {
+      setTime((prevTime) => ({
+        ...prevTime,
+        minutes: 0,
+      }));
+    } else if (time.hours === 24) {
+      setTime((prevTime) => ({
+        ...prevTime,
+        hours: 0,
+      }));
+    }
+  }
+
+  useEffect(() => {
+    if (!tenzies) {
+      let clearTimer = setInterval(timer, 1000);
+      return () => clearInterval(clearTimer);
+    }
+  }, [time]);
 
   useEffect(() => {
     const firstValue = dice[0].value;
@@ -13,7 +96,10 @@ export default function App() {
     const allHeld = dice.every((die) => die.isHeld === true);
     if (allSame && allHeld) {
       setTenzies(true);
-      console.log("You won");
+    } else if (!allSame && allHeld) {
+      setNotSameValues(true);
+    } else {
+      setNotSameValues(false);
     }
   }, [dice]);
 
@@ -49,6 +135,7 @@ export default function App() {
     } else {
       setTenzies(false);
       setDice(allNewFaces());
+      setTime(timeFormat());
     }
   }
 
@@ -67,10 +154,26 @@ export default function App() {
         Roll until all dice are the same. Click each die to freeze it at its
         current value between rolls.
       </p>
+      <h4>
+        Time = {time.hours}:{time.minutes}:{time.seconds} &emsp; High Score ={" "}
+        {highScore.hours}:{highScore.minutes}:{highScore.seconds}
+      </h4>
       <div className="dice--container">{allDices}</div>
-      <button className="roll-dice" onClick={rollDice}>
-        {tenzies ? "New Game" : "Roll"}
-      </button>
+      {tenzies && (
+        <h4>
+          Congrats! You Won! : Time-Taken to win = {time.hours}:{time.minutes}:
+          {time.seconds}
+        </h4>
+      )}
+      {notSameValues && <h4>Please Select the Same Values</h4>}
+      <div className="buttons">
+        <button className="btn-dice" onClick={rollDice}>
+          {tenzies ? "New Game" : "Roll"}
+        </button>
+        <button onClick={resetHighScore} className="btn-dice">
+          Clear Score
+        </button>
+      </div>
     </main>
   );
 }
